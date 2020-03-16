@@ -1,5 +1,6 @@
 class AssignsController < ApplicationController
   before_action :authenticate_user!
+  before_action :only_owner_or_current_user, only: [:destroy]
 
   def create
     team = Team.friendly.find(params[:team_id])
@@ -37,13 +38,19 @@ class AssignsController < ApplicationController
       I18n.t('views.messages.cannot_delete_member_4_some_reason')
     end
   end
-  
+
   def email_reliable?(address)
     address.match(/\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i)
   end
-  
+
   def set_next_team(assign, assigned_user)
     another_team = Assign.find_by(user_id: assigned_user.id).team
     change_keep_team(assigned_user, another_team) if assigned_user.keep_team_id == assign.team_id
+  end
+
+  def only_owner_or_current_user
+    unless current_user.id == Team.friendly.find(params[:team_id]).owner_id || current_user.id == Assign.find(params[:id]).user_id
+      redirect_to team_url(params[:team_id]), notice: '権限がありません'
+    end
   end
 end

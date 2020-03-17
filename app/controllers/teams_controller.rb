@@ -31,7 +31,9 @@ class TeamsController < ApplicationController
   end
 
   def update
+    before_owner_id = @team.owner_id
     if @team.update(team_params)
+      TransferMailer.transfer_mail(@team).deliver unless @team.owner_id == before_owner_id
       redirect_to @team, notice: I18n.t('views.messages.update_team')
     else
       flash.now[:error] = I18n.t('views.messages.failed_to_save_team')

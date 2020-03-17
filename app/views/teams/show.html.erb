@@ -44,6 +44,11 @@
                       <% if current_user.id == @team.owner.id || current_user.id == assign.user.id %>
                         <td><%= link_to I18n.t('views.button.delete'), team_assign_path(@team, assign), method: :delete, class: 'btn btn-sm btn-danger' %></td>
                       <% end %>
+                      <% if current_user.id == @team.owner.id && current_user.id != assign.user.id%>
+                        <%= form_with(model: @team, local: true) do |form| %>
+                          <td><%= form.hidden_field :owner_id, value: assign.user_id %><%= form.submit '権限移動', class: 'btn btn-warning' %></td>
+                        <% end %>
+                      <% end %>
                     </tr>
                   <% end %>
                 </tbody>

@@ -1,5 +1,6 @@
 class AgendasController < ApplicationController
-  # before_action :set_agenda, only: %i[show edit update destroy]
+  before_action :set_agenda, only: %i[show edit update destroy]
+  before_action :only_agendaowners, only: %i[destroy]
 
   def index
     @agendas = Agenda.all
@@ -15,10 +16,16 @@ class AgendasController < ApplicationController
     @agenda.team = Team.friendly.find(params[:team_id])
     current_user.keep_team_id = @agenda.team.id
     if current_user.save && @agenda.save
-      redirect_to dashboard_url, notice: I18n.t('views.messages.create_agenda') 
+      redirect_to dashboard_url, notice: I18n.t('views.messages.create_agenda')
     else
       render :new
     end
+  end
+
+  def destroy
+    @agenda.destroy
+    DeleteMailer.delete_mail(@agenda).deliver
+    redirect_to dashboard_url, notice: 'Delete Agenda'
   end
 
   private
@@ -29,5 +36,11 @@ class AgendasController < ApplicationController
 
   def agenda_params
     params.fetch(:agenda, {}).permit %i[title description]
+  end
+
+  def only_agendaowners
+    unless current_user.id == @agenda.user_id || current_user.id == @agenda.team.owner.id
+      redirect_to dashboard_url, notice: 'Permission denied'
+    end
   end
 end
